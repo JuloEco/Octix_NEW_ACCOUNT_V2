@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}Pourquoi l'e-mail ? — Octix{% endblock %}
+{% block content %}
+<section class="narrow-page reveal"><a class="mini-back" href="{{ url_for('register') }}">← Inscription</a><div class="eyebrow centered"><span></span> CONFIDENTIALITÉ</div><h1>Pourquoi ton e-mail ?</h1><p class="page-lead">Il sert à sécuriser et récupérer ton compte, pas à t'envoyer une newsletter.</p><div class="info-stack"><article><span>01</span><div><h2>Confirmation</h2><p>Octix t'envoie un message à la création du compte afin de confirmer que l'adresse fonctionne.</p></div></article><article><span>02</span><div><h2>Récupération</h2><p>Si tu oublies ton mot de passe, le code de réinitialisation est envoyé à cette adresse.</p></div></article><article><span>03</span><div><h2>Pas de marketing</h2><p>L'adresse n'est pas utilisée pour une newsletter ou des sollicitations publicitaires.</p></div></article></div></section>
+{% endblock %}

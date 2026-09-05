@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#07111b">
+  <title>{% block title %}Octix{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/octix.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+  <div class="grid-overlay"></div>
+
+  <header class="site-header" data-header>
+    <a class="brand" href="{{ url_for('home') }}" aria-label="Accueil Octix">
+      <img src="{{ url_for('static', filename='logos/octix.png') }}" alt="">
+      <span>OCTIX</span>
+      <small>ACCOUNT</small>
+    </a>
+
+    <button class="menu-toggle" type="button" aria-label="Ouvrir le menu" aria-expanded="false" data-menu-toggle>
+      <span></span><span></span><span></span>
+    </button>
+
+    <nav class="main-nav" data-menu>
+      <a class="{{ 'active' if request.endpoint == 'home' else '' }}" href="{{ url_for('home') }}">Accueil</a>
+      <a class="{{ 'active' if request.endpoint == 'apps_page' else '' }}" href="{{ url_for('apps_page') }}">Applications</a>
+      <a class="{{ 'active' if request.endpoint == 'about' else '' }}" href="{{ url_for('about') }}">À propos</a>
+      <a class="{{ 'active' if request.endpoint == 'contact' else '' }}" href="{{ url_for('contact') }}">Contact</a>
+      <div class="nav-actions">
+        {% if session.get('octix_token') %}
+          <a class="button ghost small" href="{{ url_for('compte.mon_compte') }}">Mon compte</a>
+          <a class="button small" href="{{ url_for('compte.deconnexion') }}">Déconnexion</a>
+        {% else %}
+          <a class="button ghost small" href="{{ url_for('compte.connexion') }}">Connexion</a>
+          <a class="button small" href="{{ url_for('register') }}">Créer un compte</a>
+        {% endif %}
+      </div>
+    </nav>
+  </header>
+
+  <main class="page-shell">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-stack" aria-live="polite">
+          {% for category, message in messages %}
+            <div class="flash {{ category or 'info' }}">
+              <span class="flash-dot"></span>
+              <span>{{ message }}</span>
+              <button type="button" aria-label="Fermer" data-dismiss-flash>×</button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <div>
+      <a class="brand footer-brand" href="{{ url_for('home') }}">
+        <img src="{{ url_for('static', filename='logos/octix.png') }}" alt="">
+        <span>OCTIX</span>
+      </a>
+      <p>Une identité. Toutes les expériences.</p>
+    </div>
+    <div class="footer-links">
+      <a href="{{ url_for('why_email') }}">Confidentialité</a>
+      <a href="{{ url_for('mot_de_passe_oublie') }}">Mot de passe oublié</a>
+      <a href="{{ url_for('contact') }}">Support</a>
+    </div>
+  </footer>
+
+  <script src="{{ url_for('static', filename='js/octix.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

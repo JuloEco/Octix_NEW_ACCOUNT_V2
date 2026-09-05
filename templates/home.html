@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Octix — Un compte. Toutes les apps.{% endblock %}
+{% block content %}
+<section class="hero">
+  <div class="hero-copy reveal">
+    <div class="eyebrow"><span></span> IDENTITÉ OCTIX</div>
+    <h1>Un compte.<br><em>Toutes les apps.</em></h1>
+    <p class="hero-lead">Ton identité unique pour naviguer entre Opsiom, Omnia, Axiom et les prochains services Octix, sans recréer un compte à chaque fois.</p>
+    <div class="hero-actions">
+      <a class="button large" href="{{ url_for('register') }}">Créer mon compte <span>→</span></a>
+      <a class="button ghost large" href="{{ url_for('compte.connexion') }}">J'ai déjà un compte</a>
+    </div>
+    <div class="trust-row">
+      <span><b>01</b> Identifiant unique</span>
+      <span><b>02</b> E-mail de sécurité</span>
+      <span><b>03</b> Même mot de passe partout</span>
+    </div>
+  </div>
+
+  <div class="identity-panel reveal delay-1" aria-label="Écosystème Octix">
+    <div class="orbit orbit-a"></div>
+    <div class="orbit orbit-b"></div>
+    <div class="identity-core">
+      <div class="core-glow"></div>
+      <img src="{{ url_for('static', filename='logos/octix.png') }}" alt="Logo Octix">
+      <strong>OCTIX ID</strong>
+      <small>CONNECTED ECOSYSTEM</small>
+    </div>
+    {% for app in apps %}
+      <div class="orbit-app app-{{ loop.index }}">
+        <img src="{{ url_for('static', filename='logos/' + app.file) }}" alt="{{ app.name }}">
+        <span>{{ app.name }}</span>
+      </div>
+    {% endfor %}
+    <div class="status-pill"><i></i> Service d'identité opérationnel</div>
+  </div>
+</section>
+
+<section class="section-block reveal">
+  <div class="section-heading">
+    <div>
+      <div class="eyebrow"><span></span> ÉCOSYSTÈME</div>
+      <h2>Une porte d'entrée commune.</h2>
+    </div>
+    <p>Octix relie les services sans leur retirer leur personnalité. Ton compte suit simplement ton parcours.</p>
+  </div>
+  <div class="app-grid">
+    {% for app in apps %}
+      <article class="app-card">
+        <div class="app-icon"><img src="{{ url_for('static', filename='logos/' + app.file) }}" alt=""></div>
+        <div class="app-meta"><span>0{{ loop.index }}</span><small>{{ app.tagline }}</small></div>
+        <h3>{{ app.name }}</h3>
+        <p>{{ app.description }}</p>
+      </article>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="cta-band reveal">
+  <div>
+    <div class="eyebrow"><span></span> PRÊT ?</div>
+    <h2>Ton identité Octix prend moins d'une minute.</h2>
+  </div>
+  <div class="cta-actions">
+    <a class="button large" href="{{ url_for('register') }}">Créer un compte</a>
+    <a class="text-link" href="{{ url_for('compte.connexion') }}">Connexion →</a>
+  </div>
+</section>
+{% endblock %}

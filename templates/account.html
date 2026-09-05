@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Mon compte — Octix{% endblock %}
+{% block content %}
+<section class="account-hero reveal">
+  <div>
+    <div class="eyebrow"><span></span> ESPACE PERSONNEL</div>
+    <h1>Bonjour, <em>{{ profil.username }}</em>.</h1>
+    <p>Gère ton identité Octix depuis un seul endroit.</p>
+  </div>
+  <a class="button ghost" href="{{ url_for('compte.deconnexion') }}">Se déconnecter</a>
+</section>
+
+<section class="account-grid">
+  <article class="settings-card profile-card reveal">
+    <div class="settings-heading"><div><span>PROFIL</span><h2>Identité</h2></div><div class="avatar">{{ profil.username[:1]|upper }}</div></div>
+    <div class="detail-row"><span>Pseudo</span><strong>{{ profil.username }}</strong></div>
+    <div class="detail-row"><span>E-mail</span><strong>{{ profil.email }}</strong></div>
+    <div class="detail-row"><span>Membre depuis</span><strong>{{ profil.created_at[:10] if profil.created_at else '—' }}</strong></div>
+  </article>
+
+  <article class="settings-card reveal delay-1">
+    <div class="settings-heading"><div><span>CLASSROOM</span><h2>Profil d'apprentissage</h2></div></div>
+    <form method="post" action="{{ url_for('compte.changer_role') }}">
+      <div class="field"><label for="classroom_role">Rôle actuel</label><select id="classroom_role" name="classroom_role"><option value="eleve" {% if profil.classroom_role == 'eleve' %}selected{% endif %}>Élève</option><option value="prof" {% if profil.classroom_role == 'prof' %}selected{% endif %}>Professeur</option></select></div>
+      <button class="button" type="submit">Mettre à jour</button>
+    </form>
+  </article>
+
+  <article class="settings-card progress-card reveal">
+    <div class="settings-heading"><div><span>OMNIA / LEARNCODE</span><h2>Progression</h2></div></div>
+    {% if progress.has_progress %}
+      <div class="stats-trio"><div><strong>{{ progress.level }}</strong><span>Niveau</span></div><div><strong>{{ progress.xp }}</strong><span>XP</span></div><div><strong>{{ progress.cours_completes }}</strong><span>Cours</span></div></div>
+      <div class="progress-label"><span>Progression du niveau</span><b>{{ progress.progress_in_level }} / {{ progress.next_level_xp }} XP</b></div>
+      <div class="progress-track"><span style="width: {{ progress.progress_in_level }}%"></span></div>
+    {% else %}
+      <div class="empty-state"><span>◇</span><p>Pas encore de progression LearnCode associée à ce compte.</p></div>
+    {% endif %}
+  </article>
+
+  <article class="settings-card reveal delay-1">
+    <div class="settings-heading"><div><span>SÉCURITÉ</span><h2>Mot de passe</h2></div></div>
+    <form method="post" action="{{ url_for('compte.changer_mot_de_passe') }}" class="form-grid">
+      <div class="field full-field"><label for="current_password">Mot de passe actuel</label><input type="password" id="current_password" name="current_password" required></div>
+      <div class="field full-field"><label for="new_password">Nouveau mot de passe</label><input type="password" id="new_password" name="new_password" minlength="6" required></div>
+      <button class="button full-field" type="submit">Changer le mot de passe</button>
+    </form>
+  </article>
+
+  <article class="settings-card danger-card reveal">
+    <div class="settings-heading"><div><span>ZONE DE DANGER</span><h2>Supprimer le compte</h2></div></div>
+    <p>Cette action est définitive. Elle supprime ton identité Octix, mais pas nécessairement les données propres à chaque application.</p>
+    <form method="post" action="{{ url_for('compte.supprimer_compte') }}" onsubmit="return confirm('Supprimer définitivement ton compte Octix ?');">
+      <div class="field"><label for="password_delete">Confirme avec ton mot de passe</label><input type="password" id="password_delete" name="password" required></div>
+      <button class="button danger" type="submit">Supprimer mon compte</button>
+    </form>
+  </article>
+</section>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Applications — Octix{% endblock %}
+{% block content %}
+<section class="page-intro reveal">
+  <div class="eyebrow centered"><span></span> OCTIX NETWORK</div>
+  <h1>Un compte qui circule<br><em>avec toi.</em></h1>
+  <p>Chaque branche garde son univers. Octix relie simplement ton identité entre les expériences.</p>
+</section>
+<section class="app-grid large-grid reveal delay-1">
+  {% for app in apps %}
+    <article class="app-card featured-app">
+      <div class="app-icon large"><img src="{{ url_for('static', filename='logos/' + app.file) }}" alt="{{ app.name }}"></div>
+      <div class="app-meta"><span>0{{ loop.index }}</span><small>{{ app.tagline }}</small></div>
+      <h2>{{ app.name }}</h2><p>{{ app.description }}</p>
+      <div class="compatibility"><i></i> Compatible Octix ID</div>
+    </article>
+  {% endfor %}
+</section>
+<section class="cta-band reveal"><div><div class="eyebrow"><span></span> IDENTITÉ UNIQUE</div><h2>Un seul compte suffit.</h2></div><div class="cta-actions"><a class="button large" href="{{ url_for('register') }}">Créer mon compte</a><a class="text-link" href="{{ url_for('compte.connexion') }}">Connexion →</a></div></section>
+{% endblock %}

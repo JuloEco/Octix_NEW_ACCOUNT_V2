@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}Contact — Octix{% endblock %}
+{% block content %}
+<section class="contact-layout reveal">
+  <div class="contact-copy"><div class="eyebrow"><span></span> SUPPORT</div><h1>Besoin d'un coup de main ?</h1><p>Pour un problème de compte, de connexion ou d'e-mail, tu peux contacter Octix directement.</p><div class="contact-address"><span>ADRESSE DE CONTACT</span><a href="mailto:octix.org@gmail.com">octix.org@gmail.com</a></div></div>
+  <div class="support-card"><div class="support-icon">?</div><h2>Avant d'écrire</h2><p>Si ton problème concerne ton mot de passe, le plus rapide est d'utiliser la récupération automatique.</p><a class="button large full" href="{{ url_for('mot_de_passe_oublie') }}">Mot de passe oublié →</a><a class="button ghost large full" href="mailto:octix.org@gmail.com">Envoyer un e-mail</a></div>
+</section>
+{% endblock %}

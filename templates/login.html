@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Connexion — Octix{% endblock %}
+{% block content %}
+<section class="auth-layout login-layout">
+  <aside class="auth-aside reveal">
+    <a class="mini-back" href="{{ url_for('home') }}">← Retour</a>
+    <div class="eyebrow"><span></span> BON RETOUR</div>
+    <h1>Retrouve ton<br><em>écosystème.</em></h1>
+    <p>Un seul accès pour retrouver ton profil Octix et les services qui l'utilisent.</p>
+    <div class="connected-strip">
+      {% for app in octix_apps %}
+        <div><img src="{{ url_for('static', filename='logos/' + app.file) }}" alt=""><span>{{ app.name }}</span></div>
+      {% endfor %}
+    </div>
+  </aside>
+
+  <div class="auth-card compact-card reveal delay-1">
+    <div class="card-heading">
+      <span>OCTIX ID</span>
+      <h2>Connexion</h2>
+      <p>Entre les identifiants de ton compte Octix.</p>
+    </div>
+    <form method="post" class="form-grid">
+      <div class="field full-field">
+        <label for="username">Pseudo</label>
+        <input type="text" id="username" name="username" value="{{ username or '' }}" placeholder="Ton pseudo" autocomplete="username" required autofocus>
+      </div>
+      <div class="field full-field">
+        <div class="label-row"><label for="password">Mot de passe</label><a href="{{ url_for('mot_de_passe_oublie') }}">Oublié ?</a></div>
+        <div class="password-wrap"><input type="password" id="password" name="password" placeholder="Ton mot de passe" autocomplete="current-password" required><button type="button" data-toggle-password="password">Voir</button></div>
+      </div>
+      <button class="button large full full-field" type="submit">Se connecter <span>→</span></button>
+    </form>
+    <p class="auth-switch">Pas encore de compte ? <a href="{{ url_for('register') }}">Créer mon Octix ID</a></p>
+  </div>
+</section>
+{% endblock %}
