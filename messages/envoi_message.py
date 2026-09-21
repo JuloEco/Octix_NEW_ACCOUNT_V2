@@ -1,6 +1,17 @@
 """
-Envoi des e-mails Octix (Bienvenue & Code de réinitialisation).
-==============================================================
+Envoi des e-mails Octix (Bienvenue & Code de réinitialisation) via Brevo.
+=========================================================================
+
+On passe par le relais SMTP de Brevo (et non par l'API HTTP) car les
+e-mails Octix embarquent des images en pièces jointes intégrées (CID :
+logo et GIF). L'API transactionnelle de Brevo ne gère pas les images CID,
+alors que le relais SMTP transmet le message MIME tel quel.
+
+Variables d'environnement :
+    BREVO_SMTP_LOGIN    identifiant SMTP (du type xxxx@smtp-brevo.com)
+    BREVO_SMTP_KEY      clé SMTP (commence par « xsmtpsib- »), PAS la clé API
+    BREVO_SENDER_EMAIL  adresse d'expéditeur (vérifiée / domaine authentifié)
+    BREVO_SENDER_NAME   nom affiché (optionnel, défaut : « Octix »)
 """
 
 import smtplib
@@ -8,6 +19,8 @@ import os
 import sys
 import logging
 from email.message import EmailMessage
+from email.utils import formataddr, formatdate, make_msgid
+from html import escape
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -17,16 +30,39 @@ logger = logging.getLogger("octix_email")
 
 BASE_DIR = Path(__file__).resolve().parent
 
-SMTP_SERVER = "smtp.gmail.com"
+SMTP_SERVER = "smtp-relay.brevo.com"
 SMTP_PORT = 587
-SENDER_EMAIL = "octix.org@gmail.com"
 HUB_URL = "https://omni-lbhc.onrender.com"
 
 
-def _get_app_password() -> str:
-    """Récupère et nettoie la clé MDP depuis l'environnement."""
-    raw_mdp = os.environ.get("MDP", "")
-    return raw_mdp.replace(" ", "").strip()
+def _get_config() -> tuple[dict | None, str | None]:
+    """
+    Lit la configuration Brevo depuis l'environnement.
+
+    Retourne (config, None) si tout est présent,
+    ou (None, message_d_erreur) s'il manque des variables.
+    """
+    config = {
+        "login": os.environ.get("BREVO_SMTP_LOGIN", "").strip(),
+        "key": os.environ.get("BREVO_SMTP_KEY", "").strip(),
+        "sender_email": os.environ.get("BREVO_SENDER_EMAIL", "").strip(),
+        "sender_name": os.environ.get("BREVO_SENDER_NAME", "Octix").strip(),
+    }
+
+    variables = {
+        "login": "BREVO_SMTP_LOGIN",
+        "key": "BREVO_SMTP_KEY",
+        "sender_email": "BREVO_SENDER_EMAIL",
+    }
+    manquantes = [nom for cle, nom in variables.items() if not config[cle]]
+
+    if manquantes:
+        return None, (
+            "Variable(s) d'environnement manquante(s) : "
+            + ", ".join(manquantes)
+        )
+
+    return config, None
 
 
 def _smtp_response(response) -> str:
@@ -36,9 +72,25 @@ def _smtp_response(response) -> str:
     return str(response)
 
 
+def _nouveau_message(config: dict, destinataire: str, sujet: str) -> EmailMessage:
+    """Crée un message avec les en-têtes communs (From, To, Date, Message-ID)."""
+    msg = EmailMessage()
+
+    msg["Subject"] = sujet
+    msg["From"] = formataddr((config["sender_name"], config["sender_email"]))
+    msg["To"] = destinataire
+    msg["Date"] = formatdate(localtime=True)
+    msg["Message-ID"] = make_msgid(
+        domain=config["sender_email"].split("@")[-1]
+    )
+
+    return msg
+
+
 def _send_message_with_trace(
     server: smtplib.SMTP,
     msg: EmailMessage,
+    expediteur: str,
     destinataire: str
 ) -> tuple[bool, str]:
     """
@@ -56,11 +108,11 @@ def _send_message_with_trace(
     # 1. MAIL FROM
     # ---------------------------------------------------------
 
-    code, response = server.mail(SENDER_EMAIL)
+    code, response = server.mail(expediteur)
 
     logger.info(
         "[SMTP] MAIL FROM <%s> -> %s %s",
-        SENDER_EMAIL,
+        expediteur,
         code,
         _smtp_response(response)
     )
@@ -118,6 +170,51 @@ def _send_message_with_trace(
     )
 
 
+def _transmettre(
+    config: dict,
+    msg: EmailMessage,
+    destinataire: str
+) -> tuple[bool, str]:
+    """Ouvre la connexion au relais Brevo et envoie le message."""
+
+    with smtplib.SMTP(
+        SMTP_SERVER,
+        SMTP_PORT,
+        timeout=10
+    ) as server:
+
+        # TLS
+        server.starttls()
+
+        # Authentification Brevo (login SMTP + clé SMTP)
+        server.login(
+            config["login"],
+            config["key"]
+        )
+
+        logger.info("[SMTP] Authentification Brevo réussie")
+
+        # -------------------------------------------------
+        # Transaction SMTP détaillée
+        # -------------------------------------------------
+
+        ok, result = _send_message_with_trace(
+            server,
+            msg,
+            config["sender_email"],
+            destinataire
+        )
+
+    if not ok:
+        logger.error(
+            "[EMAIL] Échec transaction SMTP vers %s : %s",
+            destinataire,
+            result
+        )
+
+    return ok, result
+
+
 def envoyer_email_confirmation(
     destinataire: str,
     username: str
@@ -126,10 +223,9 @@ def envoyer_email_confirmation(
     Envoie l'e-mail de bienvenue à `destinataire`.
     """
 
-    app_password = _get_app_password()
+    config, err = _get_config()
 
-    if not app_password:
-        err = "Variable d'environnement 'MDP' manquante."
+    if err:
         logger.error(f"[EMAIL] {err}")
         return False, err
 
@@ -139,14 +235,11 @@ def envoyer_email_confirmation(
         # CONSTRUCTION DU MESSAGE
         # =====================================================
 
-        msg = EmailMessage()
-
-        msg["Subject"] = (
+        msg = _nouveau_message(
+            config,
+            destinataire,
             "Ton compte Octix a été créé avec succès !"
         )
-
-        msg["From"] = SENDER_EMAIL
-        msg["To"] = destinataire
 
         msg.set_content(
             f"Bienvenue {username} ! "
@@ -171,7 +264,7 @@ def envoyer_email_confirmation(
 
         html = (
             html
-            .replace("{{USERNAME}}", username)
+            .replace("{{USERNAME}}", escape(username))
             .replace("{{HUB_URL}}", HUB_URL)
         )
 
@@ -209,60 +302,36 @@ def envoyer_email_confirmation(
                     )
 
         # =====================================================
-        # CONNEXION SMTP
+        # ENVOI VIA BREVO
         # =====================================================
 
-        with smtplib.SMTP(
-            SMTP_SERVER,
-            SMTP_PORT,
-            timeout=10
-        ) as server:
+        ok, result = _transmettre(config, msg, destinataire)
 
-            # TLS
-            server.starttls()
-
-            # Authentification Gmail
-            server.login(
-                SENDER_EMAIL,
-                app_password
-            )
-
-            logger.info(
-                "[SMTP] Authentification Gmail réussie pour <%s>",
-                SENDER_EMAIL
-            )
-
-            # -------------------------------------------------
-            # Transaction SMTP détaillée
-            # -------------------------------------------------
-
-            ok, result = _send_message_with_trace(
-                server,
-                msg,
-                destinataire
-            )
-
-            if not ok:
-
-                logger.error(
-                    "[EMAIL] Échec transaction SMTP vers %s : %s",
-                    destinataire,
-                    result
-                )
-
-                return False, result
+        if not ok:
+            return False, result
 
         # =====================================================
         # SUCCÈS
         # =====================================================
 
         logger.info(
-            "[EMAIL] E-mail accepté par Gmail pour %s : %s",
+            "[EMAIL] E-mail accepté par Brevo pour %s : %s",
             destinataire,
             result
         )
 
         return True, result
+
+    except smtplib.SMTPAuthenticationError:
+
+        err_msg = (
+            "Authentification Brevo refusée : vérifie "
+            "BREVO_SMTP_LOGIN et BREVO_SMTP_KEY (clé SMTP, pas clé API)."
+        )
+
+        logger.error(f"[EMAIL] {err_msg}")
+
+        return False, err_msg
 
     except Exception as e:
 
@@ -285,10 +354,9 @@ def envoyer_code_reinitialisation(
     la réinitialisation du mot de passe.
     """
 
-    app_password = _get_app_password()
+    config, err = _get_config()
 
-    if not app_password:
-        err = "Variable d'environnement 'MDP' manquante."
+    if err:
         logger.error(f"[EMAIL] {err}")
         return False, err
 
@@ -298,14 +366,11 @@ def envoyer_code_reinitialisation(
         # CONSTRUCTION DU MESSAGE
         # =====================================================
 
-        msg = EmailMessage()
-
-        msg["Subject"] = (
+        msg = _nouveau_message(
+            config,
+            destinataire,
             f"Ton code de réinitialisation Octix : {code}"
         )
-
-        msg["From"] = SENDER_EMAIL
-        msg["To"] = destinataire
 
         msg.set_content(
             f"Bonjour {username},\n\n"
@@ -333,11 +398,11 @@ def envoyer_code_reinitialisation(
 
         html = (
             html
-            .replace("{{USERNAME}}", username)
-            .replace("{{CODE}}", code)
+            .replace("{{USERNAME}}", escape(username))
+            .replace("{{CODE}}", escape(str(code)))
         )
 
-        html_part = msg.add_alternative(
+        msg.add_alternative(
             html,
             subtype="html"
         )
@@ -345,6 +410,10 @@ def envoyer_code_reinitialisation(
         # -----------------------------------------------------
         # Logo
         # -----------------------------------------------------
+
+        # add_alternative() ne renvoie rien : on récupère la partie HTML
+        # (la 2e du message) pour pouvoir y rattacher le logo.
+        html_part = msg.get_payload(1)
 
         logo_path = BASE_DIR / "octix.png"
 
@@ -362,54 +431,32 @@ def envoyer_code_reinitialisation(
                 )
 
         # =====================================================
-        # CONNEXION SMTP
+        # ENVOI VIA BREVO
         # =====================================================
 
-        with smtplib.SMTP(
-            SMTP_SERVER,
-            SMTP_PORT,
-            timeout=10
-        ) as server:
+        ok, result = _transmettre(config, msg, destinataire)
 
-            server.starttls()
-
-            server.login(
-                SENDER_EMAIL,
-                app_password
-            )
-
-            logger.info(
-                "[SMTP] Authentification Gmail réussie pour <%s>",
-                SENDER_EMAIL
-            )
-
-            # -------------------------------------------------
-            # Transaction SMTP détaillée
-            # -------------------------------------------------
-
-            ok, result = _send_message_with_trace(
-                server,
-                msg,
-                destinataire
-            )
-
-            if not ok:
-
-                logger.error(
-                    "[EMAIL] Échec transaction SMTP vers %s : %s",
-                    destinataire,
-                    result
-                )
-
-                return False, result
+        if not ok:
+            return False, result
 
         logger.info(
-            "[EMAIL] Code accepté par Gmail pour %s : %s",
+            "[EMAIL] Code accepté par Brevo pour %s : %s",
             destinataire,
             result
         )
 
         return True, result
+
+    except smtplib.SMTPAuthenticationError:
+
+        err_msg = (
+            "Authentification Brevo refusée : vérifie "
+            "BREVO_SMTP_LOGIN et BREVO_SMTP_KEY (clé SMTP, pas clé API)."
+        )
+
+        logger.error(f"[EMAIL] {err_msg}")
+
+        return False, err_msg
 
     except Exception as e:
 
