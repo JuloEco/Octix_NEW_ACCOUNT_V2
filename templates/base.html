@@ -34,6 +34,9 @@
       <a class="{{ 'active' if request.endpoint == 'contact' else '' }}" href="{{ url_for('contact') }}">Contact</a>
       <div class="nav-actions">
         {% if session.get('octix_token') %}
+          {% if session.get('octix_username', '')|lower == 'jules' %}
+            <a class="button ghost small" href="{{ url_for('admin.envoyer_emails') }}">Admin</a>
+          {% endif %}
           <a class="button ghost small" href="{{ url_for('compte.mon_compte') }}">Mon compte</a>
           <a class="button small" href="{{ url_for('compte.deconnexion') }}">Déconnexion</a>
         {% else %}

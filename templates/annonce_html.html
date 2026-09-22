@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Contenu HTML — Octix{% endblock %}
+{% block content %}
+<section class="narrow-page" style="max-width:820px">
+  <a class="mini-back" href="{{ url_for('annonce.nouvelle') }}">← Retour</a>
+  <div class="eyebrow centered"><span></span> ÉTAPE 2 / 3</div>
+  <h1 style="font-size:clamp(2.2rem,4.5vw,3.2rem)">Contenu HTML</h1>
+  <p class="page-lead">Objet : « {{ objet }} » — {{ nb_destinataires }} destinataire{{ 's' if nb_destinataires != 1 else '' }}.</p>
+
+  {% if images %}
+    <div class="inline-notice success" style="text-align:left">
+      <b>Images disponibles</b> — référence-les dans ton HTML avec leur CID :
+      <ul style="margin:8px 0 0;padding-left:18px">
+        {% for img in images %}
+          <li><code>&lt;img src="cid:{{ img.cid }}"&gt;</code> — {{ img.filename }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
+  <div class="auth-card" style="text-align:left">
+    <form method="post" action="{{ url_for('annonce.html_step') }}" class="form-grid">
+      <input type="hidden" name="objet" value="{{ objet }}">
+      {% for img in images %}
+        <input type="hidden" name="images-{{ loop.index0 }}-cid" value="{{ img.cid }}">
+        <input type="hidden" name="images-{{ loop.index0 }}-filename" value="{{ img.filename }}">
+        <input type="hidden" name="images-{{ loop.index0 }}-mimetype" value="{{ img.mimetype }}">
+        <input type="hidden" name="images-{{ loop.index0 }}-data" value="{{ img.data_b64 }}">
+      {% endfor %}
+
+      <div class="field full-field">
+        <label for="corps_html">Code HTML de l'e-mail</label>
+        <textarea id="corps_html" name="corps_html" rows="18" style="width:100%;padding:14px;background:#0a1621;border:1px solid var(--border);border-radius:11px;color:var(--text);font:500 .82rem 'JetBrains Mono',monospace;resize:vertical" placeholder="<h1>Nouveau jeu d'Axiom</h1>&#10;<p>Intrigues et couronnes est désormais disponible...</p>" required>{{ request.form.get('corps_html', '') }}</textarea>
+      </div>
+
+      <button type="submit" class="button large full full-field">Continuer → aperçu</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

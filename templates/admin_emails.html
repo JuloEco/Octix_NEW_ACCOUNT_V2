@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Admin — Envoi d'e-mails — Octix{% endblock %}
+{% block content %}
+<section class="account-hero reveal">
+  <div>
+    <div class="eyebrow"><span></span> ADMINISTRATION</div>
+    <h1>Envoi d'e-mails <em>HTML</em></h1>
+    <p>Compose un message et envoie-le à un ou plusieurs destinataires. Chacun reçoit son propre e-mail.</p>
+  </div>
+  <a class="button ghost" href="{{ url_for('compte.mon_compte') }}">Retour au compte</a>
+</section>
+
+<section class="account-grid">
+  <article class="settings-card reveal" style="grid-column: 1 / -1;">
+    <div class="settings-heading"><div><span>MESSAGE</span><h2>Nouvel envoi</h2></div></div>
+    <form method="post" class="form-grid">
+      <div class="field full-field">
+        <label for="destinataires">Destinataires</label>
+        <input
+          type="text"
+          id="destinataires"
+          name="destinataires"
+          placeholder="alice@mail.com, bob@mail.com"
+          value="{{ destinataires }}"
+          required
+        >
+      </div>
+
+      <div class="field full-field">
+        <label for="sujet">Sujet</label>
+        <input type="text" id="sujet" name="sujet" value="{{ sujet }}" required>
+      </div>
+
+      <div class="field full-field">
+        <label for="contenu_html">Contenu HTML</label>
+        <textarea
+          id="contenu_html"
+          name="contenu_html"
+          rows="16"
+          placeholder="<h1>Bonjour</h1><p>Ton message ici…</p>"
+          required
+        >{{ contenu_html }}</textarea>
+      </div>
+
+      <button class="button full-field" type="submit">Envoyer l'e-mail</button>
+    </form>
+  </article>
+</section>
+{% endblock %}

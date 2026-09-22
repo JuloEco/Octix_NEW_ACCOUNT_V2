@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Annonce envoyée — Octix{% endblock %}
+{% block content %}
+<section class="narrow-page">
+  <div class="success-state">
+    <div class="success-ring"><span>✓</span></div>
+    <div class="eyebrow centered"><span></span> ANNONCE TRAITÉE</div>
+    <h2>« {{ objet }} »</h2>
+    <p>{{ nb_envoyes }} e-mail{{ 's' if nb_envoyes != 1 else '' }} envoyé{{ 's' if nb_envoyes != 1 else '' }} avec succès.</p>
+
+    {% if nb_echecs %}
+      <div class="inline-notice warning" style="text-align:left">
+        <b>{{ nb_echecs }} échec{{ 's' if nb_echecs != 1 else '' }} :</b>
+        <ul style="margin:8px 0 0;padding-left:18px">
+          {% for e in echecs %}
+            <li>{{ e.email }} — {{ e.erreur }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% else %}
+      <div class="inline-notice success">Aucun échec signalé par le serveur SMTP.</div>
+    {% endif %}
+
+    <div class="stack-actions">
+      <a class="button large full" href="{{ url_for('annonce.nouvelle') }}">Nouvelle annonce</a>
+      <a class="button ghost large full" href="{{ url_for('home') }}">Retour à l'accueil</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Annonces — Octix{% endblock %}
+{% block content %}
+<section class="auth-layout login-layout">
+  <div class="auth-card compact-card reveal" style="margin:0 auto">
+    <div class="card-heading">
+      <span>ACCÈS RESTREINT</span>
+      <h2>Outil d'annonces</h2>
+      <p>Réservé à l'administration Octix — un e-mail par annonce, jamais de newsletter récurrente.</p>
+    </div>
+    <form method="post" class="form-grid">
+      <div class="field full-field">
+        <label for="mot_de_passe">Mot de passe admin</label>
+        <input type="password" id="mot_de_passe" name="mot_de_passe" placeholder="••••••••" required autofocus>
+      </div>
+      <button type="submit" class="button large full full-field">Entrer →</button>
+    </form>
+  </div>
+</section>
+{% endblock %}
