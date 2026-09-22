@@ -13,7 +13,7 @@
 <section class="account-grid">
   <article class="settings-card reveal" style="grid-column: 1 / -1;">
     <div class="settings-heading"><div><span>MESSAGE</span><h2>Nouvel envoi</h2></div></div>
-    <form method="post" class="form-grid">
+    <form method="post" class="form-grid" enctype="multipart/form-data">
       <div class="field full-field">
         <label for="destinataires">Destinataires</label>
         <input
@@ -22,8 +22,12 @@
           name="destinataires"
           placeholder="alice@mail.com, bob@mail.com"
           value="{{ destinataires }}"
-          required
         >
+      </div>
+
+      <div class="field full-field" style="flex-direction:row; align-items:center; gap:10px;">
+        <input type="checkbox" id="envoyer_a_tous" name="envoyer_a_tous" style="width:auto; min-height:auto;" onchange="document.getElementById('destinataires').disabled = this.checked;">
+        <label for="envoyer_a_tous" style="margin:0;">Envoyer à tout le monde (tous les comptes Octix)</label>
       </div>
 
       <div class="field full-field">
@@ -40,6 +44,11 @@
           placeholder="<h1>Bonjour</h1><p>Ton message ici…</p>"
           required
         >{{ contenu_html }}</textarea>
+      </div>
+
+      <div class="field full-field">
+        <label for="pieces_jointes">Pièces jointes (optionnel)</label>
+        <input type="file" id="pieces_jointes" name="pieces_jointes" multiple>
       </div>
 
       <button class="button full-field" type="submit">Envoyer l'e-mail</button>
