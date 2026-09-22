@@ -14,6 +14,7 @@ Variables d'environnement :
     BREVO_SENDER_NAME   nom affiché (optionnel, défaut : « Octix »)
 """
 
+import re
 import smtplib
 import os
 import sys
@@ -467,6 +468,84 @@ def envoyer_code_reinitialisation(
         )
 
         return False, err_msg
+
+
+def _html_vers_texte_brut(html: str) -> str:
+    """
+    Extraction très basique de texte à partir d'HTML, utilisée uniquement
+    comme repli texte brut pour les e-mails admin (le rendu réel reste
+    la version HTML fournie).
+    """
+    texte = re.sub(r"(?is)<(script|style)[^>]*>.*?</\1>", "", html)
+    texte = re.sub(r"(?s)<[^>]+>", " ", texte)
+    texte = re.sub(r"\s+", " ", texte).strip()
+    return texte or "Ce message ne peut être affiché qu'au format HTML."
+
+
+def envoyer_email_admin(
+    destinataires: list[str],
+    sujet: str,
+    html_content: str
+) -> dict[str, tuple[bool, str]]:
+    """
+    Envoie un e-mail avec un contenu HTML libre depuis l'espace admin Octix.
+
+    Un message distinct est envoyé à chaque destinataire (ils ne se voient
+    pas entre eux). Le HTML fourni n'est ni modifié ni échappé : il est
+    envoyé tel quel comme corps du message.
+
+    Retourne un dict {destinataire: (succes, message)}.
+    """
+
+    config, err = _get_config()
+
+    if err:
+        logger.error(f"[EMAIL][ADMIN] {err}")
+        return {destinataire: (False, err) for destinataire in destinataires}
+
+    texte_brut = _html_vers_texte_brut(html_content)
+    resultats: dict[str, tuple[bool, str]] = {}
+
+    for destinataire in destinataires:
+        try:
+            msg = _nouveau_message(config, destinataire, sujet)
+            msg.set_content(texte_brut)
+            msg.add_alternative(html_content, subtype="html")
+
+            ok, result = _transmettre(config, msg, destinataire)
+            resultats[destinataire] = (ok, result)
+
+            if ok:
+                logger.info(
+                    "[EMAIL][ADMIN] E-mail accepté par Brevo pour %s : %s",
+                    destinataire, result
+                )
+            else:
+                logger.error(
+                    "[EMAIL][ADMIN] Échec d'envoi pour %s : %s",
+                    destinataire, result
+                )
+
+        except smtplib.SMTPAuthenticationError:
+            err_msg = (
+                "Authentification Brevo refusée : vérifie "
+                "BREVO_SMTP_LOGIN et BREVO_SMTP_KEY (clé SMTP, pas clé API)."
+            )
+            logger.error(f"[EMAIL][ADMIN] {err_msg}")
+            resultats[destinataire] = (False, err_msg)
+            # Inutile de retenter les destinataires suivants : l'authentification
+            # échouera de la même façon pour chacun d'eux.
+            for restant in destinataires:
+                if restant not in resultats:
+                    resultats[restant] = (False, err_msg)
+            break
+
+        except Exception as e:
+            err_msg = f"Échec d'envoi e-mail : {e}"
+            logger.error(f"[EMAIL][ADMIN] {err_msg}")
+            resultats[destinataire] = (False, err_msg)
+
+    return resultats
 
 
 # =============================================================
