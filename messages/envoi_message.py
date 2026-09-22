@@ -485,7 +485,8 @@ def _html_vers_texte_brut(html: str) -> str:
 def envoyer_email_admin(
     destinataires: list[str],
     sujet: str,
-    html_content: str
+    html_content: str,
+    pieces_jointes: list[dict] | None = None,
 ) -> dict[str, tuple[bool, str]]:
     """
     Envoie un e-mail avec un contenu HTML libre depuis l'espace admin Octix.
@@ -493,6 +494,10 @@ def envoyer_email_admin(
     Un message distinct est envoyé à chaque destinataire (ils ne se voient
     pas entre eux). Le HTML fourni n'est ni modifié ni échappé : il est
     envoyé tel quel comme corps du message.
+
+    `pieces_jointes` est une liste optionnelle de dicts :
+        {"nom": str, "contenu": bytes, "type_mime": str}
+    Les mêmes pièces jointes sont attachées à chaque envoi.
 
     Retourne un dict {destinataire: (succes, message)}.
     """
@@ -503,6 +508,7 @@ def envoyer_email_admin(
         logger.error(f"[EMAIL][ADMIN] {err}")
         return {destinataire: (False, err) for destinataire in destinataires}
 
+    pieces_jointes = pieces_jointes or []
     texte_brut = _html_vers_texte_brut(html_content)
     resultats: dict[str, tuple[bool, str]] = {}
 
@@ -511,6 +517,16 @@ def envoyer_email_admin(
             msg = _nouveau_message(config, destinataire, sujet)
             msg.set_content(texte_brut)
             msg.add_alternative(html_content, subtype="html")
+
+            for piece in pieces_jointes:
+                type_mime = piece.get("type_mime") or "application/octet-stream"
+                maintype, _, subtype = type_mime.partition("/")
+                msg.add_attachment(
+                    piece["contenu"],
+                    maintype=maintype or "application",
+                    subtype=subtype or "octet-stream",
+                    filename=piece["nom"],
+                )
 
             ok, result = _transmettre(config, msg, destinataire)
             resultats[destinataire] = (ok, result)
