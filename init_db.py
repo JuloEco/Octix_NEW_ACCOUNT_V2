@@ -30,4 +30,7 @@ from app import app, db
 
 with app.app_context():
     db.create_all()
-    print(f"Tables créées (ou déjà existantes) sur : {app.config['SQLALCHEMY_DATABASE_URI'].split('@')[-1]}")
+    # On n'affiche plus aucun fragment de l'URI de connexion (même la partie
+    # après le "@" reste un nom d'hôte/de base interne) : juste une
+    # confirmation que l'opération a réussi.
+    print("Tables créées (ou déjà existantes).")
