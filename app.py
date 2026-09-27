@@ -13,12 +13,14 @@ from urllib.parse import quote
 import requests
 from flask import Flask, flash, redirect, render_template, request, url_for
 
+from admin_routes import admin_bp
 from compte_routes import compte_bp
 from messages.envoi_message import envoyer_code_reinitialisation, envoyer_email_confirmation
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "octix_portal_secret")
 app.register_blueprint(compte_bp)
+app.register_blueprint(admin_bp)
 
 OCTIX_URL = os.environ.get("OCTIX_URL", "http://localhost:5050")
 OCTIX_INTERNAL_KEY = os.environ.get("OCTIX_INTERNAL_KEY")

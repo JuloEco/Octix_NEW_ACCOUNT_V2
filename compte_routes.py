@@ -148,6 +148,36 @@ def changer_mot_de_passe():
     return redirect(url_for("compte.mon_compte"))
 
 
+@compte_bp.route("/compte/api-key/generer", methods=["POST"])
+@compte_bp.route("/mon-compte/api-key/generer", methods=["POST"])
+@login_required
+def generer_cle_api():
+    status, result = _request("POST", "/account/api-key")
+    if status == 401:
+        session.clear()
+        flash("Ta session a expiré, reconnecte-toi.", "error")
+        return redirect(url_for("compte.connexion"))
+    if status not in (200, 201):
+        flash(result.get("error", "Impossible de générer une clé API pour le moment."), "error")
+        return redirect(url_for("compte.mon_compte"))
+
+    profil_status, profil = _request("GET", "/account/me")
+    if profil_status != 200:
+        flash("Clé générée, mais impossible de recharger ton profil.", "error")
+        return redirect(url_for("compte.mon_compte"))
+
+    progress_status, progress = _request("GET", "/account/learncode-progress")
+    if progress_status != 200:
+        progress = {"has_progress": False}
+
+    # Rendu direct (pas de redirect) : c'est la seule fois où la clé en clair
+    # transite, on ne veut pas la faire passer par une query string / session.
+    return render_template(
+        "account.html", profil=profil, progress=progress,
+        new_api_key=result.get("api_key"),
+    )
+
+
 @compte_bp.route("/compte/supprimer", methods=["POST"])
 @compte_bp.route("/mon-compte/supprimer", methods=["POST"])
 @login_required
