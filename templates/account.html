@@ -46,6 +46,27 @@
     </form>
   </article>
 
+  <article class="settings-card reveal delay-1">
+    <div class="settings-heading"><div><span>DÉVELOPPEUR</span><h2>Clé API</h2></div></div>
+    {% if new_api_key %}
+      <div class="empty-state">
+        <p><strong>Copie cette clé maintenant</strong> — pour des raisons de sécurité, elle ne sera plus jamais affichée en clair.</p>
+        <div class="detail-row"><code id="new-api-key" style="word-break: break-all;">{{ new_api_key }}</code></div>
+        <button type="button" class="button ghost" data-copy-target="new-api-key">Copier</button>
+      </div>
+    {% elif profil.api_key_preview %}
+      <div class="detail-row"><span>Clé actuelle</span><strong>{{ profil.api_key_preview }}</strong></div>
+      <div class="detail-row"><span>Générée le</span><strong>{{ profil.api_key_created_at[:10] if profil.api_key_created_at else '—' }}</strong></div>
+    {% else %}
+      <div class="empty-state"><span>◇</span><p>Aucune clé API générée pour ce compte.</p></div>
+    {% endif %}
+    {% set confirm_msg = "Générer une nouvelle clé remplacera l'actuelle, qui cessera de fonctionner. Continuer ?" if profil.api_key_preview else "Générer une clé API pour ce compte ?" %}
+    <form method="post" action="{{ url_for('compte.generer_cle_api') }}"
+          onsubmit="return confirm({{ confirm_msg|tojson }});">
+      <button class="button{{ ' ghost' if profil.api_key_preview else '' }}" type="submit">{{ 'Régénérer la clé API' if profil.api_key_preview else 'Générer une clé API' }}</button>
+    </form>
+  </article>
+
   <article class="settings-card danger-card reveal">
     <div class="settings-heading"><div><span>ZONE DE DANGER</span><h2>Supprimer le compte</h2></div></div>
     <p>Cette action est définitive. Elle supprime ton identité Octix, mais pas nécessairement les données propres à chaque application.</p>
