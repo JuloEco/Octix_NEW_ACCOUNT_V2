@@ -55,5 +55,17 @@
       }
     });
   });
+  document.querySelectorAll('[data-copy-target]').forEach(button => {
+    button.addEventListener('click', () => {
+      const el = document.getElementById(button.dataset.copyTarget);
+      if (!el) return;
+      navigator.clipboard.writeText(el.textContent.trim()).then(() => {
+        const original = button.textContent;
+        button.textContent = 'Copié !';
+        setTimeout(() => { button.textContent = original; }, 1500);
+      });
+    });
+  });
+
   if (password2) password2.addEventListener('input', () => password2.setCustomValidity(''));
 })();
